@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#234d3b" />
+  <meta name="description" content="Little Tree kindergarten management and family updates." />
+  <title>Little Tree | Kindergarten</title>
+</head>
+<body>
+  <div id="root">
+    <!-- This plain HTML remains readable even when JavaScript modules cannot load. -->
+    <section id="startup-message" aria-live="polite" style="max-width:640px;margin:12vh auto;padding:28px;font:16px/1.7 system-ui,sans-serif;color:#293a2d;background:white">
+      <p style="color:#687760">Little Tree</p>
+      <h1 style="font-size:28px;line-height:1.3">Open Little Tree with the local launcher</h1>
+      <p data-startup-description>This app needs a local server. Opening an HTML file directly cannot load its application modules or share the portal's saved updates.</p>
+      <div data-startup-help>
+        <ol>
+          <li>Return to the <strong>little-tree</strong> project folder. If you are in <strong>dist</strong>, go up one folder.</li>
+          <li>Double-click <strong>Start Little Tree.cmd</strong>.</li>
+          <li>Keep the launcher window and portal tab open. The portal and TV page open in Microsoft Edge.</li>
+        </ol>
+        <p>If the server is already running, <a href="http://127.0.0.1:5173/" style="color:#405f3c">open this page through the local server</a>.</p>
+        <p>Use the same address and browser profile for all views. Files opened through file:// have separate browser storage.</p>
+      </div>
+      <noscript><p>JavaScript is disabled. Enable it for Little Tree after starting the local server.</p></noscript>
+    </section>
+  </div>
+  <script>
+    (function () {
+      var message = document.getElementById('startup-message');
+      window.littleTreeStartFailed = function () {
+        if (!message.isConnected) return;
+        message.querySelector('h1').textContent = 'Little Tree could not finish loading';
+        message.querySelector('[data-startup-description]').textContent = 'An application file did not load. Restart the local launcher, then reload this page. Your saved browser records have not been reset.';
+        message.querySelector('[data-startup-help]').hidden = false;
+      };
+      if (location.protocol === 'file:') return;
+      message.querySelector('h1').textContent = 'Starting Little Tree...';
+      message.querySelector('[data-startup-description]').textContent = 'Opening your local workspace.';
+      message.querySelector('[data-startup-help]').hidden = true;
+      var icon = document.createElement('link');
+      icon.rel = 'icon'; icon.href = './favicon.svg'; document.head.appendChild(icon);
+      setTimeout(window.littleTreeStartFailed, 8000);
+    }());
+  </script>
+  <script type="module">
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+      import('./src/main.jsx').catch(function (error) {
+        console.error('Little Tree startup failed:', error);
+        window.littleTreeStartFailed();
+      });
+    }
+  </script>
+</body>
+</html>

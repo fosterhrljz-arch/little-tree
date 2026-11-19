@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./main-BAPRWuF7.js","./index-BUW4kmv4.js","./index-CYA5YcPx.css","./main-v76nszln.css"])))=>i.map(i=>d[i]);
+import{_ as o}from"./preload-helper-DMGCcr4D.js";(location.protocol==="http:"||location.protocol==="https:")&&o(()=>import("./main-BAPRWuF7.js"),__vite__mapDeps([0,1,2,3]),import.meta.url).catch(function(t){console.error("Little Tree startup failed:",t),window.littleTreeStartFailed()});

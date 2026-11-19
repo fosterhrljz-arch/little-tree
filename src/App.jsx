@@ -1,0 +1,40 @@
+import { useEffect, useState } from 'react';
+import { Sprout, CalendarDays, Utensils, CarFront, Layers, Image, MessageCircle, Megaphone, CalendarCheck, Monitor, Users, Menu, X, CircleCheck, Download, Heart } from 'lucide-react';
+import { useSchool } from './store';
+import { teachers } from './model';
+import { Button, Modal, downloadFile } from './components';
+import { Segments } from './SharedV2';
+import Today from './Today';
+import DailyMenu from './DailyMenu';
+import Arrivals from './Arrivals';
+import Activities from './Activities';
+import Moments from './Moments';
+import Feedback from './Feedback';
+import Announcements from './Announcements';
+import PublicDisplay from './PublicDisplay';
+import { Classes, Students, MyChild } from './People';
+import Attendance from './Attendance';
+import Leaves from './Leaves';
+const navItems=[['Today',CalendarDays],['Daily Menu',Utensils],['Arrival & Pickup',CarFront],['Class Activities',Layers],['Class Moments',Image],['Parent Feedback',MessageCircle],['School Announcements',Megaphone],['Leave & Attendance',CalendarCheck],['Public Display',Monitor],['School Directory',Users]];
+export default function App(){
+ const {data,actor,setActor,storageError}=useSchool();const [page,setPage]=useState('Today'),[sub,setSub]=useState('Students'),[leaveTab,setLeaveTab]=useState('Leave requests'),[filter,setFilter]=useState('all'),[mobile,setMobile]=useState(false),[demo,setDemo]=useState(false);
+ const navigate=(value,classId='all')=>{if(value==='Students'||value==='Classes'){setPage('School Directory');setSub(value)}else if(value==='Attendance'){setPage('Leave & Attendance');setLeaveTab('Attendance')}else setPage(value);setFilter(classId);setMobile(false);window.scrollTo({top:0,behavior:'instant'})};
+ const switchActor=patch=>{setActor({...actor,...patch});navigate('Today')};
+ const nav=actor.role==='parent'?[...navItems.filter(([name])=>!['Public Display','School Directory'].includes(name)),['My Child',Heart]]:navItems;
+ useEffect(()=>{document.title=`${page} · Little Tree`},[page]);
+ useEffect(()=>{const escape=e=>{if(e.key==='Escape')setMobile(false)};window.addEventListener('keydown',escape);return()=>window.removeEventListener('keydown',escape)},[]);
+ let content;
+ if(page==='Today')content=<Today navigate={navigate}/>;
+ else if(page==='Daily Menu')content=<DailyMenu/>;
+ else if(page==='Arrival & Pickup')content=<Arrivals/>;
+ else if(page==='Class Activities')content=<Activities/>;
+ else if(page==='Class Moments')content=<Moments/>;
+ else if(page==='Parent Feedback')content=<Feedback/>;
+ else if(page==='School Announcements')content=<Announcements/>;
+ else if(page==='Public Display')content=<PublicDisplay/>;
+ else if(page==='My Child')content=<MyChild/>;
+ else if(page==='School Directory')content=<><Segments items={['Students','Classes']} value={sub} onChange={setSub}/>{sub==='Students'?<Students key={filter} initialClass={filter}/>:<Classes navigate={navigate}/>}</>;
+ else content=<>{actor.role!=='parent'&&<Segments items={['Leave requests','Attendance']} value={leaveTab} onChange={setLeaveTab}/>}<div>{actor.role==='parent'||leaveTab==='Leave requests'?<Leaves/>:<Attendance key={filter} initialClass={filter}/>}</div></>;
+ return <div className="app"><a className="skip-link" href="#main">Skip to main content</a>{mobile&&<button className="sidebar-backdrop" aria-label="Close navigation overlay" onClick={()=>setMobile(false)}/>}<aside className={`sidebar ${mobile?'open':''}`}><a className="brand" href="#today" onClick={e=>{e.preventDefault();navigate('Today')}}><Sprout size={28}/><strong>Little Tree</strong></a><button className="mobile-close icon-button" aria-label="Close navigation" onClick={()=>setMobile(false)}><X size={19}/></button><nav aria-label="Main navigation">{nav.map(([name,Icon])=><button key={name} className={`nav-item ${page===name?'active':''} ${name==='School Directory'?'directory-link':''}`} aria-current={page===name?'page':undefined} onClick={()=>navigate(name)}><Icon size={18}/><span>{name}</span></button>)}</nav><div className="sidebar-bottom"><button className="demo-link" onClick={()=>setDemo(true)}><Monitor size={16}/>Demo workspace</button><span className="local-status"><CircleCheck size={14}/>{storageError?'Storage unavailable':'Saved on this device'}</span></div></aside><div className="main-shell"><header className="topbar"><div className="breadcrumb"><button className="menu-button icon-button" aria-label="Open navigation" onClick={()=>setMobile(true)}><Menu size={20}/></button><span>Little Tree</span><i>/</i><strong>{page}</strong></div><div className="topbar-actions"><span className="demo-label">Demo role</span><select aria-label="Demo role" value={actor.role} onChange={e=>switchActor({role:e.target.value})}><option value="principal">Principal</option><option value="teacher">Teacher</option><option value="parent">Parent</option></select></div></header>{actor.role!=='principal'&&<div className="persona-bar"><label>{actor.role==='teacher'?'Viewing as':'Family of'}<select aria-label={actor.role==='teacher'?'Teacher account':'Child account'} value={actor.role==='teacher'?actor.teacherId:actor.studentId} onChange={e=>switchActor(actor.role==='teacher'?{teacherId:e.target.value}:{studentId:e.target.value})}>{actor.role==='teacher'?teachers.map(t=><option key={t.id} value={t.id}>{t.name}</option>):data.students.filter(s=>s.active).map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label><span>Local demo · No real sign-in</span></div>}<main id="main" tabIndex={-1} key={`${page}-${actor.role}-${actor.teacherId}-${actor.studentId}`}>{content}</main></div>
+ {demo&&<Modal title="A local Little Tree workspace" onClose={()=>setDemo(false)}><div className="form-content"><p>This version uses fictional people. The role selector lets you explore principal, teacher, and parent workflows; it is not authentication.</p><div className="care-note"><h3>Saved here, on this device</h3><p>School records are stored in this browser. Photos and attachments use its local media storage. Other tabs at the same address stay in sync. Other devices and browsers have separate records.</p></div><p>Original v1 records were preserved during migration. Clearing browser data removes your progress and media. Do not enter real children’s information.</p><Button variant="secondary" onClick={()=>downloadFile('little-tree-records-v2.json',JSON.stringify(data,null,2),'application/json')}><Download size={15}/>Export records</Button><p className="muted">This JSON export includes records and media references, but not the photo or attachment files. It is not a full media backup. Restore is not included.</p><p className="muted">Scheduled announcements publish while the portal is open, checked every 15 seconds. A shared server, secure accounts, and cross-device TV access belong to the next version.</p></div></Modal>}</div>;
+}

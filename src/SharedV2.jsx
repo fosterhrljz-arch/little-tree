@@ -1,0 +1,16 @@
+import { useEffect, useState } from 'react';
+import { Plus, Pencil, Trash2, Download, Image as ImageIcon } from 'lucide-react';
+import { Button, Field } from './components';
+import { saveFile, loadFile } from './media';
+import { useSchool } from './store';
+export function Actions({onEdit,onDelete,children}) {return <div className="row-actions">{children}{onEdit&&<Button variant="ghost" onClick={onEdit}><Pencil size={14}/>Edit</Button>}{onDelete&&<Button variant="ghost" onClick={onDelete}><Trash2 size={14}/>Delete</Button>}</div>}
+export function AddButton({children,onClick}){return <Button onClick={onClick}><Plus size={15}/>{children}</Button>}
+export function FilePicker({label='Photo',value,onChange,imageOnly=true}) {
+ const [error,setError]=useState(''),[busy,setBusy]=useState(false);
+ return <div className="upload-field"><Field label={label} hint={imageOnly?'JPEG, PNG, or WebP · up to 8 MB. Stored only on this device.':'PDF or image · up to 8 MB. Stored only on this device.'}><input type="file" accept={imageOnly?'image/jpeg,image/png,image/webp':'image/jpeg,image/png,image/webp,application/pdf'} disabled={busy} onChange={async e=>{setError('');setBusy(true);const file=e.target.files[0];try{if(file)onChange(await saveFile(file,{imageOnly}))}catch(err){setError(err.message)}finally{setBusy(false);e.target.value=''}}}/></Field>{busy&&<p role="status">Saving file…</p>}{value&&<div className="file-row"><span>{value.name}</span><button type="button" onClick={()=>onChange(null)}>Remove file</button></div>}{error&&<p role="alert" className="form-error">{error}</p>}</div>
+}
+export function StoredImage({file,alt,...props}) {const [url,setUrl]=useState('');useEffect(()=>{let alive=true,objectUrl;setUrl('');if(file)loadFile(file).then(item=>{if(item&&alive){objectUrl=URL.createObjectURL(item.blob);setUrl(objectUrl)}}).catch(()=>{});return()=>{alive=false;if(objectUrl)URL.revokeObjectURL(objectUrl)}},[file?.id]);return url?<img src={url} alt={alt} {...props}/>:file?<span className="missing-media"><ImageIcon size={18}/>Photo unavailable on this device</span>:null;}
+export function Attachment({file}){const {notify}=useSchool();if(!file)return null;return <Button variant="secondary" onClick={async()=>{try{const item=await loadFile(file);if(!item)throw new Error('This attachment is missing from device storage.');const url=URL.createObjectURL(item.blob);const a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}catch(e){notify(e.message)}}}><Download size={15}/>{file.name}</Button>}
+export function DateControl({value,onChange,label='Date'}){return <label className="inline-field"><span>{label}</span><input aria-label={label} type="date" value={value} onChange={e=>e.target.value&&onChange(e.target.value)}/></label>}
+export function Segments({items,value,onChange}){return <div className="segments" role="tablist">{items.map(item=><button key={item} role="tab" aria-selected={item===value} className={item===value?'active':''} onClick={()=>onChange(item)}>{item}</button>)}</div>}
+export function useAction(){const {act,notify}=useSchool();return(type,payload,message)=>{try{return act(type,payload,message)}catch(e){notify(e.message);return false}}}
